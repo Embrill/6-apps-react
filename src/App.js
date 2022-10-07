@@ -1,22 +1,53 @@
-import React, { useState } from 'react';
-import Modal from './components/Modal';
+import { useState } from 'react';
+import Game from './components/Game';
+import Result from './components/Result';
 import './index.scss';
 
+// Массив вопросов
+const questions = [
+  {
+    title: 'React - это ... ?',
+    variants: ['Библиотека', 'Фреймворк', 'Приложение'],
+    correct: 0,
+  },
+  {
+    title: 'Компонент - это ... ',
+    variants: ['приложение', 'часть приложения или страницы', 'то, что я не знаю что такое'],
+    correct: 1,
+  },
+  {
+    title: 'Что такое JSX?',
+    variants: [
+      'Это простой HTML',
+      'Это функция',
+      'Это тот же HTML, но с возможностью выполнять JS-код',
+    ],
+    correct: 2,
+  },
+];
 
-
+// Основной компонент
 function App() {
-  const [modal, setModal] = useState(false);
+  const [step, setStep] = useState(0); // Номер шага - нужен для прогрессбара
+  const [correct, setCorrect] = useState(0); // Номер правильного ответа
+  const question = questions[step]; // Номер вопроса
+
+  // Функция клика по вариантам
+  const onClickVariant = (index) => {
+    console.log(step, index)
+    setStep(step + 1)
+
+    // Сравнение на правильность варианта
+    if (index === question.correct) {
+      setCorrect(correct + 1)
+    }
+  };
 
   return (
     <div className="App">
-      <button onClick={() => setModal(true)} className="open-modal-btn">✨ Открыть окно</button>
-
-      <Modal modal={modal} setModal={setModal}>
-        <img src="https://media2.giphy.com/media/xT0xeJpnrWC4XWblEk/giphy.gif" />
-        <h3>Это модальное окно</h3>
-        Сюда можно писать что угодно, т.к. у модал есть children
-      </Modal>
-
+      {
+        step !== questions.length ? <Game step={step} question={question} onClickVariant={onClickVariant} questions={questions} /> : <Result correct={correct} questions={questions} />
+      }
     </div>
   );
 }

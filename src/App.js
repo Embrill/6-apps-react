@@ -1,68 +1,72 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Block } from './Block';
 import './index.scss';
-import { Success } from './components/Success';
-import { Users } from './components/Users/Users';
-
-// Тут список пользователей: https://reqres.in/api/users
 
 function App() {
-  const [users, setUsers] = useState([]); // Список пользователей
-  const [isLoading, setLoading] = useState(true); // Состояние загрузки скелета 
-  const [searchValue, setSearchValue] = useState(''); // Состояние поиска пользователй
-  const [invites, setInvites] = useState([]); // Массив добавленных пользователей
-  const [success, setSuccess] = useState(false);
+  // Выбор валюты
+  const [fromCurrency, setFromCurrency] = useState("USD");
+  const [toCurrency, setToCurrency] = useState("RUB");
 
+  // Вводимые данные в инпут
+  const [fromPrice, setFromPrice] = useState(0);
+  const [toPrice, setToPrice] = useState(0);
+
+  // Взятие данных с бэка
+  // const [rates, setRates] = useState({});
+  const ratesRef = useRef({});
+
+  // Запрос к БД
   useEffect(() => {
-    // Запрос к базе данных
-    fetch("https://reqres.in/api/users")
+    fetch("https://cdn.cur.su/api/latest.json")
       .then(res => res.json())
       .then(json => {
-        setUsers(json.data) // fetch - запрос | json - полученные данные 
+        // setRates(json.rates)
+        ratesRef.current = json.rates;
+        onChangeFromPrice(1) // Установка значения при получении БД
       }).catch(err => {
         console.log(err);
-        alert("Ошибка при получении пользователей")
-      }).finally(() => setLoading(false)); // отключение скелетона при получении данных с сервера
-  }, [])
+        alert("Ошибка при получении данных валют")
+      })
+  }, []);
 
-  const onChangeSearchValue = (event) => {
-    setSearchValue(event.target.value)
+  // Конвертация валюты
+  const onChangeFromPrice = (value) => {
+    const price = value / ratesRef.current[fromCurrency];
+    const result = price * ratesRef.current[toCurrency];
+    setToPrice(result.toFixed(3))
+    setFromPrice(value)
   };
 
-  // Добавление пользователя в приглашения
-  const onClickInvite = (id) => {
-    if (invites.includes(id)) {
-      setInvites(prev => prev.filter(_id => _id !== id))
-    } else {
-      setInvites(prev => [...prev, id])
-    }
+  const onChangeToPrice = (value) => {
+    const result = (ratesRef.current[fromCurrency] / ratesRef.current[toCurrency]) * value;
+    setFromPrice(result.toFixed(3))
+    setToPrice(value)
   };
 
-  const onClickSendInvates = () => {
-    setSuccess(true)
-  };
+  // Динамическая конвертация валют
+  useEffect(() => {
+    onChangeFromPrice(fromPrice)
+  }, [fromCurrency]);
+
+  useEffect(() => {
+    onChangeToPrice(toPrice)
+  }, [toCurrency]);
+
 
   return (
     <div className="App">
-      {
-        success ? (
-          <Success
-            count={invites.length}
-          />
-        ) : (
-          <Users
-            items={users}
-            isLoading={isLoading}
-            searchValue={searchValue}
-            onChangeSearchValue={onChangeSearchValue}
-
-            invites={invites}
-            onClickInvite={onClickInvite}
-
-            onClickSendInvates={onClickSendInvates}
-          />
-        )
-      }
-
+      <Block
+        value={fromPrice}
+        currency={fromCurrency}
+        onChangeCurrency={setFromCurrency}
+        onChangeValue={onChangeFromPrice}
+      />
+      <Block
+        value={toPrice}
+        currency={toCurrency}
+        onChangeCurrency={setToCurrency}
+        onChangeValue={onChangeToPrice}
+      />
     </div>
   );
 }

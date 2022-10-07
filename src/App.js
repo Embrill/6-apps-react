@@ -1,53 +1,68 @@
-import { useState } from 'react';
-import Game from './components/Game';
-import Result from './components/Result';
+import React, { useEffect, useState } from 'react';
 import './index.scss';
+import { Success } from './components/Success';
+import { Users } from './components/Users/Users';
 
-// Массив вопросов
-const questions = [
-  {
-    title: 'React - это ... ?',
-    variants: ['Библиотека', 'Фреймворк', 'Приложение'],
-    correct: 0,
-  },
-  {
-    title: 'Компонент - это ... ',
-    variants: ['приложение', 'часть приложения или страницы', 'то, что я не знаю что такое'],
-    correct: 1,
-  },
-  {
-    title: 'Что такое JSX?',
-    variants: [
-      'Это простой HTML',
-      'Это функция',
-      'Это тот же HTML, но с возможностью выполнять JS-код',
-    ],
-    correct: 2,
-  },
-];
+// Тут список пользователей: https://reqres.in/api/users
 
-// Основной компонент
 function App() {
-  const [step, setStep] = useState(0); // Номер шага - нужен для прогрессбара
-  const [correct, setCorrect] = useState(0); // Номер правильного ответа
-  const question = questions[step]; // Номер вопроса
+  const [users, setUsers] = useState([]); // Список пользователей
+  const [isLoading, setLoading] = useState(true); // Состояние загрузки скелета 
+  const [searchValue, setSearchValue] = useState(''); // Состояние поиска пользователй
+  const [invites, setInvites] = useState([]); // Массив добавленных пользователей
+  const [success, setSuccess] = useState(false);
 
-  // Функция клика по вариантам
-  const onClickVariant = (index) => {
-    console.log(step, index)
-    setStep(step + 1)
+  useEffect(() => {
+    // Запрос к базе данных
+    fetch("https://reqres.in/api/users")
+      .then(res => res.json())
+      .then(json => {
+        setUsers(json.data) // fetch - запрос | json - полученные данные 
+      }).catch(err => {
+        console.log(err);
+        alert("Ошибка при получении пользователей")
+      }).finally(() => setLoading(false)); // отключение скелетона при получении данных с сервера
+  }, [])
 
-    // Сравнение на правильность варианта
-    if (index === question.correct) {
-      setCorrect(correct + 1)
+  const onChangeSearchValue = (event) => {
+    setSearchValue(event.target.value)
+  };
+
+  // Добавление пользователя в приглашения
+  const onClickInvite = (id) => {
+    if (invites.includes(id)) {
+      setInvites(prev => prev.filter(_id => _id !== id))
+    } else {
+      setInvites(prev => [...prev, id])
     }
+  };
+
+  const onClickSendInvates = () => {
+    setSuccess(true)
   };
 
   return (
     <div className="App">
       {
-        step !== questions.length ? <Game step={step} question={question} onClickVariant={onClickVariant} questions={questions} /> : <Result correct={correct} questions={questions} />
+        success ? (
+          <Success
+            count={invites.length}
+          />
+        ) : (
+          <Users
+            items={users}
+            isLoading={isLoading}
+            searchValue={searchValue}
+            onChangeSearchValue={onChangeSearchValue}
+
+            invites={invites}
+            onClickInvite={onClickInvite}
+
+            onClickSendInvates={onClickSendInvates}
+          />
+        )
       }
+
     </div>
   );
 }

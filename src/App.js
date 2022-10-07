@@ -1,25 +1,22 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import Modal from './components/Modal';
 import './index.scss';
 
+
+
 function App() {
-  const [count, setCount] = useState(0);
-
-  const countPlus = () => {
-    setCount(prev => prev + 1)
-  };
-
-  const countMinus = () => {
-    setCount(prev => prev - 1)
-  };
+  const [modal, setModal] = useState(false);
 
   return (
     <div className="App">
-      <div>
-        <h2>Счетчик:</h2>
-        <h1>{count}</h1>
-        <button className="minus" onClick={countMinus}>- Минус</button>
-        <button className="plus" onClick={countPlus}>Плюс +</button>
-      </div>
+      <button onClick={() => setModal(true)} className="open-modal-btn">✨ Открыть окно</button>
+
+      <Modal modal={modal} setModal={setModal}>
+        <img src="https://media2.giphy.com/media/xT0xeJpnrWC4XWblEk/giphy.gif" />
+        <h3>Это модальное окно</h3>
+        Сюда можно писать что угодно, т.к. у модал есть children
+      </Modal>
+
     </div>
   );
 }
